@@ -7,9 +7,12 @@ class SpotifyPlaylist():
     def get_playlist(self,playlist_uri):
 
         """This function used for get the playlist response"""
+        with open("D:\Spotify/spoti.txt", "r") as file:
+            data = file.readlines()
+            id = data[0].strip("\n")
+            secret = data[1].strip("\n")
 
-        id="921a402707bc44eb8769e3de2b4fd30b"
-        secret="17ed0ad0f91a441397a31d1b5210afac"
+        print(id)
 
         # playlist_uri = 'spotify:playlist:37i9dQZEVXbNG2KDcFcKOF'
 
@@ -17,11 +20,13 @@ class SpotifyPlaylist():
         client_secret=secret,))
 
         results = spotify.playlist(playlist_uri)
+        print(results)
         # results = spotify.playlist_tracks(playlist_uri)["items"]
 
         return results
 
-
+# obj = SpotifyPlaylist()
+# obj.get_playlist("ds")
 
 
 
