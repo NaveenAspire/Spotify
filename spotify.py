@@ -2,31 +2,37 @@
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 
-class SpotifyPlaylist():
+
+class SpotifyPlaylist:
     """This class has method for getting playlist from spotify using spotipy api"""
-    def get_playlist(self,playlist_uri):
+
+    def get_playlist(self, playlist_uri):
 
         """This function used for get the playlist response"""
-        with open("D:\Spotify/spoti.txt", "r") as file:
+        with open("D:/Spotify/spoti.txt", "r",encoding='utf8') as file:
             data = file.readlines()
-            id = data[0].strip("\n")
-            secret = data[1].strip("\n")
-
-        print(id)
+            client_id = data[0].strip("\n")
+            client_secret = data[1].strip("\n")
 
         # playlist_uri = 'spotify:playlist:37i9dQZEVXbNG2KDcFcKOF'
 
-        spotify = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials(client_id=id,
-        client_secret=secret,))
+        try:
+            spotify = spotipy.Spotify(
+                client_credentials_manager=SpotifyClientCredentials(
+                    client_id=client_id,
+                    client_secret=client_secret,
+                )
+            )
 
-        results = spotify.playlist(playlist_uri)
-        print(results)
+            results = spotify.playlist(playlist_uri)
+        except spotipy.SpotifyException:
+            print("Pass the valid playlist uri id in argparse")
+            return False
+        # print(results)
         # results = spotify.playlist_tracks(playlist_uri)["items"]
 
         return results
 
+
 # obj = SpotifyPlaylist()
 # obj.get_playlist("ds")
-
-
-
