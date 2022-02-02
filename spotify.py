@@ -1,6 +1,10 @@
 """This module used for spotify connection and get the playlist response"""
 import spotipy
+import configparser
 from spotipy.oauth2 import SpotifyClientCredentials
+
+config = configparser.ConfigParser()
+config.read('D:/Spotify/credentials.ini')
 
 
 class SpotifyPlaylist:
@@ -9,18 +13,18 @@ class SpotifyPlaylist:
     def get_playlist(self, playlist_uri):
 
         """This function used for get the playlist response"""
-        with open("D:/Spotify/spoti.txt", "r",encoding='utf8') as file:
-            data = file.readlines()
-            client_id = data[0].strip("\n")
-            client_secret = data[1].strip("\n")
+        # with open("D:/Spotify/spoti.txt", "r",encoding='utf8') as file:
+        #     data = file.readlines()
+        #     client_id = data[0].strip("\n")
+        #     client_secret = data[1].strip("\n")
 
         # playlist_uri = 'spotify:playlist:37i9dQZEVXbNG2KDcFcKOF'
 
         try:
             spotify = spotipy.Spotify(
                 client_credentials_manager=SpotifyClientCredentials(
-                    client_id=client_id,
-                    client_secret=client_secret,
+                    client_id=config['spotipy']['client_id'],
+                    client_secret=config['spotipy']['client_secret']
                 )
             )
 

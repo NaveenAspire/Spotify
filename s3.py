@@ -1,7 +1,10 @@
 """This module has s3 service connection and uploading file into s3"""
 import boto3
+import configparser
 from botocore.exceptions import ClientError
 
+config = configparser.ConfigParser()
+config.read('D:/Spotify/credentials.ini')
 
 class S3Service:
     """This class has the methods for s3 service"""
@@ -19,10 +22,12 @@ class S3Service:
             pass
 
 
-with open("D:/PythonExplore/access.txt", "r",encoding="utf8") as acess:
-    data = acess.readlines()
-    aws_acess_key = data[0].strip("\n")
-    aws_secret_key = data[1].strip("\n")
+# with open("D:/PythonExplore/access.txt", "r",encoding="utf8") as acess:
+#     data = acess.readlines()
+#     aws_acess_key = data[0].strip("\n")
+#     aws_secret_key = data[1].strip("\n")
 s3 = boto3.client(
-    "s3", aws_access_key_id=aws_acess_key, aws_secret_access_key=aws_secret_key
+    "s3", aws_access_key_id= config['aws']['aws_acess_key'],
+    aws_secret_access_key= config['aws']['aws_secret_key']
 )
+

@@ -16,7 +16,6 @@ logging.basicConfig(
     force=True,
 )
 
-
 class GetPlaylist:
     """This class has functions for get tracklist and convert the list into json & csv file
     then upload file"""
