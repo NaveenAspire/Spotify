@@ -45,7 +45,7 @@ class GetPlaylist:
                 album_list.append(album_name)
                 duration_list.append(str(mm) + ":" + str(ss))
                 date_list.append(date_added)
-            logging.info("Sucessfully get tracklist names")
+            logging.info("Sucessfully get track details from spotify")
             data = {
                 "Title": track_list,
                 "Album": album_list,
@@ -103,7 +103,6 @@ def main():
             play.get_csvfile_from_df(s3_obj, df_playlist, playlist_name)
     except TypeError as error:
         print(error)
-
 
 if __name__ == "__main__":
     main()

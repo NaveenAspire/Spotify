@@ -33,7 +33,6 @@ class SpotifyPlaylist:
             results = spotify_obj.playlist(playlist_id)
         except spotipy.SpotifyException:
             print("Pass the valid playlist uri id in argparse")
-            return results
 
         return results
 

@@ -30,5 +30,5 @@ class S3Service:
                 object_name,
                 ExtraArgs={"ACL": "public-read"},
             )
-        except ClientError:
-            pass
+        except ClientError as error:
+            print(error)
