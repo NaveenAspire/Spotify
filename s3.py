@@ -7,7 +7,6 @@ from botocore.exceptions import ClientError
 # config = configparser.ConfigParser()
 # config.read('D:/Spotify/credentials.ini')
 
-
 class S3Service:
     """This class has the methods for s3 service"""
 
@@ -22,6 +21,7 @@ class S3Service:
 
     def upload_file_to_s3(self,s3_obj, file, object_name):
         """This function done the file uploading in s3 aspire-data-dev bucket"""
+        status = ""
         try:
             bucket_name = "aspire-data-dev"
             s3_obj.upload_file(
@@ -30,5 +30,11 @@ class S3Service:
                 object_name,
                 ExtraArgs={"ACL": "public-read"},
             )
+            status = "Updated Sucessfully"
         except ClientError as error:
             print(error)
+        except boto3.exceptions.S3UploadFailedError as error:
+            # print(error)
+            status = "Invaid Access key Id or Secret Access Key Id was given in aws s3 connection"
+            print(status)
+        return status

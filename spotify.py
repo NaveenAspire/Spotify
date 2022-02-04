@@ -1,6 +1,6 @@
 """This module used for spotify connection and get the playlist response"""
 import spotipy
-
+import requests
 # import configparser
 from spotipy.oauth2 import SpotifyClientCredentials
 
@@ -32,7 +32,9 @@ class SpotifyPlaylist:
         try:
             results = spotify_obj.playlist(playlist_id)
         except spotipy.SpotifyException:
-            print("Pass the valid playlist uri id in argparse")
+            print("Pass the valid Spotify playlist id in argparse")
+        except requests.exceptions.ConnectionError:
+            print("Check Your Network Connection")
 
         return results
 

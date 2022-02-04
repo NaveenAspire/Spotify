@@ -29,24 +29,29 @@ class GetPlaylist:
         playlist_name = ""
         if results:
             logging.info("Sucessfully get playlist response from spotify")
+            num_list = []
             track_list = []
             album_list = []
             duration_list = []
             date_list = []
             playlist_name = results["name"]
+            num = 1
             for track in results["tracks"]["items"]:
                 track_name = track["track"]["name"]
-                track_list.append(track_name)
                 album_name = track["track"]["album"]["name"]
                 ms = track["track"]["duration_ms"]
                 ss, ms = divmod(ms, 1000)
                 mm, ss = divmod(ss, 60)
                 date_added = track["added_at"]
+                num_list.append(num)
+                num+=1
+                track_list.append(track_name)
                 album_list.append(album_name)
                 duration_list.append(str(mm) + ":" + str(ss))
                 date_list.append(date_added)
             logging.info("Sucessfully get track details from spotify")
             data = {
+                "No":num_list,
                 "Title": track_list,
                 "Album": album_list,
                 "Duration": duration_list,
@@ -67,9 +72,10 @@ class GetPlaylist:
         dest = path+"/"+(json_file) + ".json"
         df_playlist.to_json(dest, orient="records", indent=4)
         s3_file_name = r"Spotify/Source/" + playlist_name + "/" + json_file + ".json"
-        s3.S3Service.upload_file_to_s3(self,s3_obj, dest, s3_file_name)
+        status = s3.S3Service.upload_file_to_s3(self,s3_obj, dest, s3_file_name)
+        if status != "Updated Sucessfully" :
+            logging.error(status)
         logging.info("Sucessfully json playlist uploaded into s3 bucket")
-
     def get_csvfile_from_df(self, s3_obj, df_playlist, playlist_name):
         """This function make the traclist into csv file and upload into s3"""
         csv_file = (
@@ -83,8 +89,10 @@ class GetPlaylist:
         df_playlist.to_csv(dest, index=False)
 
         s3_file_name = r"Spotify/Stage/" + playlist_name + "/" + csv_file + ".csv"
-        s3.S3Service.upload_file_to_s3(self,s3_obj, dest, s3_file_name)
-        logging.info("Sucessfully json playlist uploaded into s3 bucket")
+        status = s3.S3Service.upload_file_to_s3(self,s3_obj, dest, s3_file_name)
+        if status != "Updated Sucessfully" :
+            logging.error(status)
+        logging.info("Sucessfully csv playlist uploaded into s3 bucket")
 
 def main():
     """This is the main function of the module"""
