@@ -1,18 +1,30 @@
 """This module has s3 service connection and uploading file into s3"""
 import boto3
-import configparser
+
+# import configparser
 from botocore.exceptions import ClientError
 
-config = configparser.ConfigParser()
-config.read('D:/Spotify/credentials.ini')
+# config = configparser.ConfigParser()
+# config.read('D:/Spotify/credentials.ini')
+
 
 class S3Service:
     """This class has the methods for s3 service"""
-    def upload_file(self, file, object_name):
+
+    def s3_connection(self):
+        """This function that makes the s3 conncetion"""
+        s3_obj = boto3.client(
+            "s3",
+            aws_access_key_id="AKIAZGSLVELN63NZ6ETB",
+            aws_secret_access_key="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",
+        )
+        return s3_obj
+
+    def upload_file_to_s3(self,s3_obj, file, object_name):
         """This function done the file uploading in s3 aspire-data-dev bucket"""
         try:
             bucket_name = "aspire-data-dev"
-            s3.upload_file(
+            s3_obj.upload_file(
                 file,
                 bucket_name,
                 object_name,
@@ -20,14 +32,3 @@ class S3Service:
             )
         except ClientError:
             pass
-
-
-# with open("D:/PythonExplore/access.txt", "r",encoding="utf8") as acess:
-#     data = acess.readlines()
-#     aws_acess_key = data[0].strip("\n")
-#     aws_secret_key = data[1].strip("\n")
-s3 = boto3.client(
-    "s3", aws_access_key_id= config['aws']['aws_acess_key'],
-    aws_secret_access_key= config['aws']['aws_secret_key']
-)
-

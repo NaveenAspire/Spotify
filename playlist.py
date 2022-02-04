@@ -1,16 +1,17 @@
-"""This module done the get response from spotify module and make that 
+"""This module done the get response from spotify module and make that
 response as json & csv file theupoload these files using s3 module"""
 import argparse
-import json
-import csv
 import time
 import logging
+import os
+import pandas as pd
 import s3
 import spotify
 
 logging.basicConfig(level=logging.INFO)
+log_file = os.path.dirname(os.getcwd()) + "/spotify_logging.log"
 logging.basicConfig(
-    filename="D:/Spotify/spotify_logging.log",
+    filename=log_file,
     datefmt="%d-%b-%y %H:%M:%S",
     format="%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s",
     force=True,
@@ -20,110 +21,89 @@ class GetPlaylist:
     """This class has functions for get tracklist and convert the list into json & csv file
     then upload file"""
 
-    def get_tracklist(self, track_list):
+    def get_tracklist(self, spotify_obj, id):
         """function used for get traclist from s3 module"""
         logging.info("Calling the get_palylist method from spotify module")
-        results = spotify.SpotifyPlaylist.get_playlist(self, args.id)
-        if not results:
-            logging.error("There is no response from get_playlist methd")
-            return False
-        logging.info("Sucessfully get playlist response from spotify")
-        self.playlist_name = results["name"]
-        # print(playlist_name)
-        for track in results["tracks"]["items"]:
-            # Track name
-            track_name = track["track"]["name"]
-            track_list.append(track_name)
-            # print(track_name)
-        logging.info("Sucessfully get tracklist names")
-        print(self.playlist_name)
+        results = spotify.SpotifyPlaylist.get_playlist(self,spotify_obj, id)
+        data_as_df = ""
+        playlist_name = ""
+        if results:
+            logging.info("Sucessfully get playlist response from spotify")
+            track_list = []
+            album_list = []
+            duration_list = []
+            date_list = []
+            playlist_name = results["name"]
+            for track in results["tracks"]["items"]:
+                track_name = track["track"]["name"]
+                track_list.append(track_name)
+                album_name = track["track"]["album"]["name"]
+                ms = track["track"]["duration_ms"]
+                ss, ms = divmod(ms, 1000)
+                mm, ss = divmod(ss, 60)
+                date_added = track["added_at"]
+                album_list.append(album_name)
+                duration_list.append(str(mm) + ":" + str(ss))
+                date_list.append(date_added)
+            logging.info("Sucessfully get tracklist names")
+            data = {
+                "Title": track_list,
+                "Album": album_list,
+                "Duration": duration_list,
+                "Date Added": date_list,
+            }
+            data_as_df = pd.DataFrame(data)
+        return data_as_df, playlist_name
 
-        self.get_json_playlist(track_list)
-
-        self.get_csv_playlist(track_list)
-
-    def get_json_playlist(self, track_list):
+    def get_jsonfile_from_df(self, s3_obj, df_playlist, playlist_name):
         """This function make the traclist into json file and upload into s3"""
-        epoch_time = str(int(time.time()))
-        dest = r"D:\Spotify\Upload/" + epoch_time + ".json"
-
-        with open(dest, "w") as file:
-            json.dump(track_list, file, indent=4)
-        logging.info("Sucessfully created json file for playlist")
-        playlist_name = self.playlist_name
-        # print(playlist_name)
-
-        if playlist_name == "Top Songs - Global":
-            s3_file_name = (
-                r"Spotify/Source/Top_Songs_Global/top_songs_global_"
-                + epoch_time
-                + ".json"
-            )
-
-        elif playlist_name == "Top Songs - USA":
-            s3_file_name = (
-                r"Spotify/Source/Top_Songs_USA/top_songs_usa_" + epoch_time + ".json"
-            )
-        else:
-            print("Wrong Playlist")
-            logging.error(
-                "json playlist file not uploded in s3 bucket due to wrong playlist"
-            )
-            return
-
-        s3.S3Service.upload_file(self, dest, s3_file_name)
+        json_file = (
+            playlist_name.replace(" - ", "_").lower().replace(" ", "_")
+            + "_"
+            + str(int(time.time()))
+        )
+        path = os.getcwd()
+        path = os.path.dirname(path)
+        dest = path+"/"+(json_file) + ".json"
+        df_playlist.to_json(dest, orient="records", indent=4)
+        s3_file_name = r"Spotify/Source/" + playlist_name + "/" + json_file + ".json"
+        s3.S3Service.upload_file_to_s3(self,s3_obj, dest, s3_file_name)
         logging.info("Sucessfully json playlist uploaded into s3 bucket")
 
-        pass
+    def get_csvfile_from_df(self, s3_obj, df_playlist, playlist_name):
+        """This function make the traclist into csv file and upload into s3"""
+        csv_file = (
+            playlist_name.replace(" - ", "_").lower().replace(" ", "_")
+            + "_"
+            + str(int(time.time()))
+        )
+        path = os.getcwd()
+        path = os.path.dirname(path)
+        dest = path+"/"+(csv_file) + ".csv"
+        df_playlist.to_csv(dest, index=False)
 
-    def get_csv_playlist(self, track_list):
-        """This function make the traclist into json file and upload into s3"""
-        song_list = [{"track_name": track_list}]
+        s3_file_name = r"Spotify/Stage/" + playlist_name + "/" + csv_file + ".csv"
+        s3.S3Service.upload_file_to_s3(self,s3_obj, dest, s3_file_name)
+        logging.info("Sucessfully json playlist uploaded into s3 bucket")
 
-        fields = ["track_name"]
-        epoch_time = str(int(time.time()))
-        dest = r"D:\Spotify\Upload/" + epoch_time + ".csv"
+def main():
+    """This is the main function of the module"""
+    play = GetPlaylist()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--id", type=str, help="Enter the id for playlist", required=True
+    )
+    args = parser.parse_args()
+    s3_obj = s3.S3Service.s3_connection(play)
+    spotify_obj = spotify.SpotifyPlaylist.spotify_connection(play)
+    try:
+        df_playlist, playlist_name = play.get_tracklist(spotify_obj, args.id)
+        if playlist_name:
+            play.get_jsonfile_from_df(s3_obj, df_playlist, playlist_name)
+            play.get_csvfile_from_df(s3_obj, df_playlist, playlist_name)
+    except TypeError as error:
+        print(error)
 
-        with open(dest, "w", encoding="utf8") as file:
-            csvwriter = csv.DictWriter(file, fieldnames=fields)
-            csvwriter.writeheader()
-            csvwriter.writerows(song_list)
-        logging.info("Sucessfully created csv file for playlist")
-        playlist_name = self.playlist_name
 
-        if playlist_name == "Top Songs - Global":
-            s3_file_name = (
-                r"Spotify/Stage/Top_Songs_Global/top_songs_global_"
-                + epoch_time
-                + ".csv"
-            )
-
-        elif playlist_name == "Top Songs - USA":
-            s3_file_name = (
-                r"Spotify/Stage/Top_Songs_USA/top_songs_usa_" + epoch_time + ".csv"
-            )
-        else:
-            print("Wrong Playlist")
-            logging.error("csv file not uploded in s3 bucket due to wrong playlist")
-            return
-        s3.S3Service.upload_file(self, dest, s3_file_name)
-        logging.info("Sucessfully csv playlist file uploaded into s3 bucket")
-        
-play = GetPlaylist()
-
-track_list = []
-playlist_name = ""
-
-parser = argparse.ArgumentParser()
-parser.add_argument("--id", type=str, help="Enter the id for playlist", required=True)
-args = parser.parse_args()
-
-# Calling get_traclist function for playlist response
-play.get_tracklist(track_list)
-# print(play.playlist_name)
-
-# Calling get_json_playlist function for convert tracklist into json file
-# play.get_json_playlist(track_list)
-
-# Calling get_json_playlist function for convert tracklist into csv file
-# play.get_csv_playlist(track_list)
+if __name__ == "__main__":
+    main()
