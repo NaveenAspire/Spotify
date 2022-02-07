@@ -25,69 +25,49 @@ class GetPlaylist:
         """function used for get traclist from s3 module"""
         logging.info("Calling the get_palylist method from spotify module")
         results = spotify.SpotifyPlaylist.get_playlist(self,spotify_obj, id)
-        data_as_df = ""
-        playlist_name = ""
+        data_as_df = playlist_name = ""
         if results:
             logging.info("Sucessfully get playlist response from spotify")
-            num_list = []
-            track_list = []
-            album_list = []
-            duration_list = []
-            date_list = []
             playlist_name = results["name"]
-            num = 1
-            for track in results["tracks"]["items"]:
-                track_name = track["track"]["name"]
-                album_name = track["track"]["album"]["name"]
-                ms = track["track"]["duration_ms"]
-                ss, ms = divmod(ms, 1000)
-                mm, ss = divmod(ss, 60)
-                date_added = track["added_at"]
-                num_list.append(num)
-                num+=1
-                track_list.append(track_name)
-                album_list.append(album_name)
-                duration_list.append(str(mm) + ":" + str(ss))
-                date_list.append(date_added)
-            logging.info("Sucessfully get track details from spotify")
-            data = {
-                "No":num_list,
-                "Title": track_list,
-                "Album": album_list,
-                "Duration": duration_list,
-                "Date Added": date_list,
-            }
-            data_as_df = pd.DataFrame(data)
+            items = results["tracks"]["items"]
+            data_as_df = self.get_dataframe(items)
         return data_as_df, playlist_name
+
+    def get_dataframe(self,items):
+        """This function makes the response as data frame"""
+        track_details,column_list = ([] for i in range(2) )
+        for track in items:
+            track_details.append(track['track'])
+        for key in items[0]['track'].keys():
+            column_list.append(key)
+        logging.info("Sucessfully get track details from spotify")
+        data_as_df = pd.DataFrame(track_details, columns=column_list,)
+        return data_as_df
 
     def get_jsonfile_from_df(self, s3_obj, df_playlist, playlist_name):
         """This function make the traclist into json file and upload into s3"""
         json_file = (
-            playlist_name.replace(" - ", "_").lower().replace(" ", "_")
-            + "_"
+            playlist_name.replace(" - ", "_").lower().replace(" ", "_")+ "_"
             + str(int(time.time()))
         )
-        path = os.getcwd()
-        path = os.path.dirname(path)
+        path = os.path.dirname(os.getcwd())
         dest = path+"/"+(json_file) + ".json"
-        df_playlist.to_json(dest, orient="records", indent=4)
+        df_playlist.to_json(dest, orient = 'records',lines = True)
         s3_file_name = r"Spotify/Source/" + playlist_name + "/" + json_file + ".json"
         status = s3.S3Service.upload_file_to_s3(self,s3_obj, dest, s3_file_name)
-        if status != "Updated Sucessfully" :
+        if status != "Updated Sucessfully":
             logging.error(status)
         logging.info("Sucessfully json playlist uploaded into s3 bucket")
+
     def get_csvfile_from_df(self, s3_obj, df_playlist, playlist_name):
         """This function make the traclist into csv file and upload into s3"""
         csv_file = (
-            playlist_name.replace(" - ", "_").lower().replace(" ", "_")
-            + "_"
+            playlist_name.replace(" - ", "_").lower().replace(" ", "_")+ "_"
             + str(int(time.time()))
         )
-        path = os.getcwd()
-        path = os.path.dirname(path)
+        path = os.path.dirname(os.getcwd())
         dest = path+"/"+(csv_file) + ".csv"
         df_playlist.to_csv(dest, index=False)
-
         s3_file_name = r"Spotify/Stage/" + playlist_name + "/" + csv_file + ".csv"
         status = s3.S3Service.upload_file_to_s3(self,s3_obj, dest, s3_file_name)
         if status != "Updated Sucessfully" :
@@ -98,9 +78,7 @@ def main():
     """This is the main function of the module"""
     play = GetPlaylist()
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--id", type=str, help="Enter the id for playlist", required=True
-    )
+    parser.add_argument("--id", type=str, help="Enter the id for playlist", required=True)
     args = parser.parse_args()
     s3_obj = s3.S3Service.s3_connection(play)
     spotify_obj = spotify.SpotifyPlaylist.spotify_connection(play)
