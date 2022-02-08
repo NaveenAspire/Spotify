@@ -6,8 +6,6 @@ from spotipy.oauth2 import SpotifyClientCredentials
 
 # config = configparser.ConfigParser()
 # config.read('D:/Spotify/credentials.ini')
-
-
 class SpotifyPlaylist:
     """This class has method for getting playlist from spotify using spotipy api"""
 
@@ -25,10 +23,8 @@ class SpotifyPlaylist:
     def get_playlist(self,spotify_obj, playlist_id):
 
         """This function used for get the playlist response"""
-
         # playlist_uri = 'spotify:playlist:37i9dQZEVXbNG2KDcFcKOF'
         results = ""
-
         try:
             results = spotify_obj.playlist(playlist_id)
         except spotipy.SpotifyException:

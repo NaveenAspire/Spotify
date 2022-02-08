@@ -24,10 +24,7 @@ class S3Service:
         status = ""
         try:
             bucket_name = "aspire-data-dev"
-            s3_obj.upload_file(
-                file,
-                bucket_name,
-                object_name,
+            s3_obj.upload_file(file,bucket_name,object_name,
                 ExtraArgs={"ACL": "public-read"},
             )
             status = "Updated Sucessfully"

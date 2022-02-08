@@ -42,6 +42,7 @@ class GetPlaylist:
             column_list.append(key)
         logging.info("Sucessfully get track details from spotify")
         data_as_df = pd.DataFrame(track_details, columns=column_list,)
+        print(data_as_df)
         return data_as_df
 
     def get_jsonfile_from_df(self, s3_obj, df_playlist, playlist_name):
@@ -53,11 +54,11 @@ class GetPlaylist:
         path = os.path.dirname(os.getcwd())
         dest = path+"/"+(json_file) + ".json"
         df_playlist.to_json(dest, orient = 'records',lines = True)
-        s3_file_name = r"Spotify/Source/" + playlist_name + "/" + json_file + ".json"
-        status = s3.S3Service.upload_file_to_s3(self,s3_obj, dest, s3_file_name)
-        if status != "Updated Sucessfully":
-            logging.error(status)
-        logging.info("Sucessfully json playlist uploaded into s3 bucket")
+        # s3_file_name = r"Spotify/Source/" + playlist_name + "/" + json_file + ".json"
+        # status = s3.S3Service.upload_file_to_s3(self,s3_obj, dest, s3_file_name)
+        # if status != "Updated Sucessfully":
+        #     logging.error(status)
+        # logging.info("Sucessfully json playlist uploaded into s3 bucket")
 
     def get_csvfile_from_df(self, s3_obj, df_playlist, playlist_name):
         """This function make the traclist into csv file and upload into s3"""
@@ -68,11 +69,11 @@ class GetPlaylist:
         path = os.path.dirname(os.getcwd())
         dest = path+"/"+(csv_file) + ".csv"
         df_playlist.to_csv(dest, index=False)
-        s3_file_name = r"Spotify/Stage/" + playlist_name + "/" + csv_file + ".csv"
-        status = s3.S3Service.upload_file_to_s3(self,s3_obj, dest, s3_file_name)
-        if status != "Updated Sucessfully" :
-            logging.error(status)
-        logging.info("Sucessfully csv playlist uploaded into s3 bucket")
+        # s3_file_name = r"Spotify/Stage/" + playlist_name + "/" + csv_file + ".csv"
+        # status = s3.S3Service.upload_file_to_s3(self,s3_obj, dest, s3_file_name)
+        # if status != "Updated Sucessfully" :
+        #     logging.error(status)
+        # logging.info("Sucessfully csv playlist uploaded into s3 bucket")
 
 def main():
     """This is the main function of the module"""
