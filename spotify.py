@@ -8,6 +8,10 @@ from spotipy.oauth2 import SpotifyClientCredentials
 # config.read('D:/Spotify/credentials.ini')
 class SpotifyPlaylist:
     """This class has method for getting playlist from spotify using spotipy api"""
+    
+    def __init__(self):
+        
+        pass
 
     def spotify_connection(self):
         """This finction that makes the spotify connection"""
@@ -20,20 +24,29 @@ class SpotifyPlaylist:
         )
         return spotify
 
-    def get_playlist(self,spotify_obj, playlist_id):
+    def get_playlist(self, playlist_id):
 
         """This function used for get the playlist response"""
         # playlist_uri = 'spotify:playlist:37i9dQZEVXbNG2KDcFcKOF'
         results = ""
         try:
+            spotify_obj = self.spotify_connection()
             results = spotify_obj.playlist(playlist_id)
         except spotipy.SpotifyException:
             print("Pass the valid Spotify playlist id in argparse")
         except requests.exceptions.ConnectionError:
             print("Check Your Network Connection")
-
         return results
 
+def main():
+    sp = SpotifyPlaylist()
+    spotify_obj = sp.spotify_connection()
+    playlist_id = input("Enter spotify playlist id :")
+    res = sp.get_playlist(spotify_obj,playlist_id)
+    print(res)
+
+if __name__ == "__main__":
+    main()
 
 # obj = SpotifyPlaylist()
 # obj.get_playlist("ds")
