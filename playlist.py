@@ -1,6 +1,7 @@
 """This module done the get response from spotify module and make that
 response as json & csv file theupoload these files using s3 module"""
 import argparse
+from genericpath import exists
 import time
 import logging
 import os
@@ -9,7 +10,10 @@ import s3
 import spotify
 
 logging.basicConfig(level=logging.INFO)
-log_file = os.path.dirname(os.getcwd()) + "/spotify_logging.log"
+log_path = os.path.join(os.path.dirname(os.getcwd()),'opt/log/spotify/')
+if not os.path.exists(log_path):
+    os.makedirs(log_path)
+log_file =  os.path.join(log_path,"spotify_logging.log")
 logging.basicConfig(
     filename=log_file,
     datefmt="%d-%b-%y %H:%M:%S",
@@ -51,12 +55,11 @@ class GetPlaylist:
 
     def get_jsonfile_from_df(self):
         """This function make the traclist into json file and upload into s3"""
-        json_file = (self.playlist_name.replace(" - ", "_").lower().replace(" ", "_")+ "_"
+        file_name = (self.playlist_name.replace(" - ", "_").lower().replace(" ", "_")+ "_"
             + str(int(time.time())))
-        path = os.path.dirname(os.getcwd())
-        dest = path+"/"+(json_file) + ".json"
+        dest = self.get_file_path(file_name) + ".json"
         self.df_playlist.to_json(dest, orient = 'records',lines = True)
-        s3_file_name = r"Spotify/Source/" + self.playlist_name + "/" + json_file + ".json"
+        s3_file_name = r"Spotify/Source/" + self.playlist_name + "/" + file_name + ".json"
         s3_service = s3.S3Service("aspire-data-dev")
         status = s3_service.upload_file_to_s3(dest, s3_file_name)
         if status != "Updated Sucessfully":
@@ -65,17 +68,24 @@ class GetPlaylist:
 
     def get_csvfile_from_df(self):
         """This function make the traclist into csv file and upload into s3"""
-        csv_file = (self.playlist_name.replace(" - ", "_").lower().replace(" ", "_")+ "_"
+        file_name = (self.playlist_name.replace(" - ", "_").lower().replace(" ", "_")+ "_"
             + str(int(time.time())))
-        path = os.path.dirname(os.getcwd())
-        dest = path+"/"+(csv_file) + ".csv"
+        dest = self.get_file_path(file_name) + ".csv"
         self.df_playlist.to_csv(dest, index=False)
-        s3_file_name = r"Spotify/Stage/" + self.playlist_name + "/" + csv_file + ".csv"
+        s3_file_name = r"Spotify/Stage/" + self.playlist_name + "/" + file_name + ".csv"
         s3_service = s3.S3Service("aspire-data-dev")
         status = s3_service.upload_file_to_s3(dest, s3_file_name)
         if status != "Updated Sucessfully" :
             logging.error(status)
         logging.info("Sucessfully csv playlist uploaded into s3 bucket")
+
+    def get_file_path(self,file_name):
+        
+        data_path = os.path.join(os.path.dirname(os.getcwd()),'opt/data/spotify')
+        if not os.path.exists(data_path):
+            os.makedirs(data_path)
+        file_name = data_path+"/"+(file_name)
+        return file_name
 
 def main():
     """This is the main function of the module"""

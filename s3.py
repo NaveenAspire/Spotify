@@ -55,7 +55,7 @@ class S3Service:
     def download_s3file(self,key,dest):
         s3_obj = self.s3_obj
         bucket_name = self.bucket_name
-        s3_obj.download_file(bucket_name,'employee/source/employee_details_2021_01_01.json',dest)
+        s3_obj.download_file(bucket_name,key,dest)
         pass
 
 def main():
