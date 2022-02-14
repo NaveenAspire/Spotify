@@ -8,10 +8,6 @@ from spotipy.oauth2 import SpotifyClientCredentials
 # config.read('D:/Spotify/credentials.ini')
 class SpotifyPlaylist:
     """This class has method for getting playlist from spotify using spotipy api"""
-    
-    def __init__(self):
-        
-        pass
 
     def spotify_connection(self):
         """This finction that makes the spotify connection"""
