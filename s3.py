@@ -9,8 +9,7 @@ from botocore.exceptions import ClientError
 
 class S3Service:
     """This class has the methods for s3 service"""
-    def __init__(self,bucket_name):
-        self.bucket_name = bucket_name
+    def __init__(self):
         self.s3_obj = self.s3_connection()
 
     def s3_connection(self):
@@ -22,14 +21,11 @@ class S3Service:
         )
         return s3_obj
 
-    def upload_file_to_s3(self,file, object_name):
+    def upload_file_to_s3(self, file, bucket_name, object_name):
         """This function done the file uploading in s3 aspire-data-dev bucket"""
         status = ""
         try:
-            
-            s3_obj = self.s3_obj
-            bucket_name = self.bucket_name
-            s3_obj.upload_file(file,bucket_name,object_name,
+            self.s3_obj.upload_file(file, bucket_name, object_name,
                 ExtraArgs={"ACL": "public-read"},
             )
             status = "Updated Sucessfully"
@@ -37,33 +33,25 @@ class S3Service:
             print(error)
         except boto3.exceptions.S3UploadFailedError as error:
             status = "Invaid Access key Id or Secret Access Key Id was given in aws s3 connection"
-            print(status)
         return status
 
-    def get_file_list(self,bucket_name,prefix):
+    def get_file_list(self, bucket_name, prefix):
         """This method used to get the list of files from s3 bucket"""
-        s3_obj = self.s3_obj
         file_list = []
         try :
-            my_bucket = s3_obj.list_objects_v2(Bucket=bucket_name,Prefix=prefix)
-            for file_obj in my_bucket['Contents']:
-                file_list.append(file_obj['Key'])
+            my_bucket = self.s3_obj.list_objects_v2(Bucket = bucket_name, Prefix = "employee/stage")
+            if my_bucket.get('Contents'):
+                for file_obj in my_bucket.get('Contents'):
+                    file_list.append(file_obj['Key'])
         except ClientError as err:
-            if err.response['Error']['Code']=='InvalidBucketName':
-                print("Bucket Name given is Invalid")
+            print(err)
         return file_list    
 
-    def download_s3file(self,key,dest):
+    def download_s3file(self, bucket_name, key, dest):
         try:
-            s3_obj = self.s3_obj
-            bucket_name = self.bucket_name
-            s3_obj.download_file(bucket_name,key,dest)
-            status = "sucess"
+            self.s3_obj.download_file(bucket_name, key, dest)
         except ClientError as err:
-            status = 'failed'
-            if err.response['Error']['Code'] == '404':
-                print("File object not found in s3 bucket")
-        return status
+            print(err)
 
 def main():
     aws_s3 = S3Service()
