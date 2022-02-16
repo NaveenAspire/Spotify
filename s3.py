@@ -39,10 +39,11 @@ class S3Service:
         """This method used to get the list of files from s3 bucket"""
         file_list = []
         try :
-            my_bucket = self.s3_obj.list_objects_v2(Bucket = bucket_name, Prefix = "employee/stage")
-            if my_bucket.get('Contents'):
-                for file_obj in my_bucket.get('Contents'):
-                    file_list.append(file_obj['Key'])
+            paginator = self.s3_obj.get_paginator('list_objects_v2')
+            for my_bucket in paginator.paginate(Bucket = bucket_name, Prefix = prefix):
+                if my_bucket.get('Contents'):
+                    for file_obj in my_bucket.get('Contents'):
+                        file_list.append(file_obj['Key'])
         except ClientError as err:
             print(err)
         return file_list    

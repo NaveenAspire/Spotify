@@ -16,7 +16,6 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s",
     force=True,
 )
-
 class S3FileMigration:
     """This class is has methods for migrate the files from one s3 bucket to another"""
 
@@ -35,13 +34,13 @@ class S3FileMigration:
     def migrate_files(self):
         """This function transfer the s3 files from one bucket to another"""
         logging.info("migrate file method is called.")
-        self.download_unuploaded_files()
-        
-        for file in os.listdir(self.local_dest):
-            self.s3_service.upload_file_to_s3(
-                self.local_dest + "/" + file, self.target_bucket,
-                self.source_path + '/' + file
-            )
+        unuploaded_files = self.download_unuploaded_files()
+        if unuploaded_files:
+            for file in os.listdir(self.local_dest):
+                self.s3_service.upload_file_to_s3(
+                    self.local_dest + "/" + file, self.target_bucket,
+                    self.source_path + '/' + file
+                )
 
     def download_unuploaded_files(self):
         """This function download the s3 files which not in another bucket"""
@@ -53,12 +52,13 @@ class S3FileMigration:
             if key:
                 self.s3_service.download_s3file(self.source_bucket, file, dest + "/" + key)
         logging.info("Sucessfully downloaded the unploaded files of target bucket.")
+        return files_list
 
     def get_unuploaded_files(self):
+        """This function used for get unuploaded file list."""
         logging.info("download unploaded method is called.")
         source_bucket_files = self.s3_service.get_file_list(self.source_bucket, self.source_path)
-        # print(source_bucket_files)
-        logging.info("Sucessfully get the souce bucket files as list.")
+        logging.info("Sucessfully get the source bucket files as list.")
         target_bucket_files = self.s3_service.get_file_list(self.target_bucket, self.source_path)
         logging.info("Sucessfully get the target bucket files as list.")
         files_list = [
